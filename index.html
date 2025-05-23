@@ -219,7 +219,7 @@ function gameLoop() {
     if (gameTime % 480 === 0) {
       difficulty++;
       wallSpeed += 0.4;
-      currentColor++;
+      currentColor = (currentColor + 1) % colors.length;
     }
 
     walls = walls.filter(wall => wall.radius > 40);
