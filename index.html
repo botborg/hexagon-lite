@@ -65,7 +65,7 @@ let rotationSpeed = 0;
 let wallSpeed = 1.5;
 const wallWidth = Math.PI / 6;
 let difficulty = 1;
-let colors = ["#ff0066", "#00ccff", "#33ff33", "#ffcc00", "#9900ff"];
+let colors = ["#ff0066", "#00ccff", "#33ff33", "#9900ff", "#ff3399", "#00ffcc", "#3399ff", "#cc33ff"];
 let currentColor = 0;
 
 let walls = [];
@@ -226,7 +226,7 @@ function gameLoop() {
     if (gameTime % 480 === 0) {
       difficulty++;
       wallSpeed += 0.4;
-      currentColor = (currentColor + 1) % colors.length;
+      currentColor = (currentColor + 1) % colors.length || 0;
     }
 
     walls = walls.filter(wall => wall.radius > 40);
