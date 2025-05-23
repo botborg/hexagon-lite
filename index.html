@@ -216,9 +216,9 @@ function gameLoop() {
     playerAngle += rotationSpeed;
 
     if (gameTime % 90 === 0) createWall();
-    if (gameTime % 900 === 0) {
+    if (gameTime % 480 === 0) {
       difficulty++;
-      wallSpeed += 0.2;
+      wallSpeed += 0.4;
       currentColor++;
     }
 
