@@ -122,7 +122,7 @@ function createWall() {
     if (!pattern[i]) continue;
     let angle = i * wallWidth + offset;
     let spin = 0;
-    walls.push({ angle: angle % (2 * Math.PI), radius: Math.min(w, h) * 0.5, spin });
+    walls.push({ angle: angle % (2 * Math.PI), radius: 400, spin });
   }
 }
 
@@ -132,7 +132,7 @@ function drawCirclePath() {
   ctx.shadowBlur = 20;
   ctx.beginPath();
   ctx.setLineDash([5, 5]);
-  ctx.arc(w / 2, h / 2, Math.min(w, h) * 0.15, 0, Math.PI * 2);
+  ctx.arc(w / 2, h / 2, 60, 0, Math.PI * 2);
   ctx.strokeStyle = '#FFD700';
   ctx.lineWidth = 2;
   ctx.stroke();
@@ -141,7 +141,7 @@ function drawCirclePath() {
 }
 
 function drawPlayer() {
-  const radius = Math.min(w, h) * 0.15;
+  const radius = 60;
   const x = w / 2 + Math.cos(playerAngle) * radius;
   const y = h / 2 + Math.sin(playerAngle) * radius;
   const grad = ctx.createRadialGradient(x, y, 2, x, y, 12);
@@ -168,7 +168,7 @@ function drawPlayer() {
 }
 
 function checkCollision() {
-  const playerDistance = Math.min(w, h) * 0.15;
+  const playerDistance = 60;
   const playerRadius = 10;
   for (let wall of walls) {
     let dx = Math.abs(playerAngle - wall.angle) % (2 * Math.PI);
@@ -186,7 +186,12 @@ function drawTime() {
   ctx.fillText(`Time: ${(gameTime / 60).toFixed(1)}s`, 20, 30);
 }
 
+let lastTime = performance.now();
 function gameLoop() {
+  let now = performance.now();
+  let deltaTime = (now - lastTime) / (1000 / 60);
+  lastTime = now;
+
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, w, h);
@@ -224,7 +229,7 @@ function gameLoop() {
 
     walls = walls.filter(wall => wall.radius > 40);
     for (let wall of walls) {
-      wall.radius -= wallSpeed;
+      wall.radius -= wallSpeed * deltaTime;
       wall.angle += wall.spin || 0;
       if (wall.radius < 60) continue;
       ctx.beginPath();
