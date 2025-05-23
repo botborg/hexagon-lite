@@ -1,288 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script src="https://cdn.jsdelivr.net/npm/@farcade/game-sdk@latest/dist/index.min.js"></script>
-    <meta charset="UTF-8" />
-    <title>Hexagon Lite</title>
-    <style>
-      html,
-      body {
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        background: black;
-        font-family: sans-serif;
-        color: white;
+<head>
+<script src="https://cdn.jsdelivr.net/npm/@farcade/game-sdk@latest/dist/index.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Hexagon Lite</title>
+  <style>
+      * {
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
-      canvas {
-        display: block;
-      }
-      #startScreen,
-      #gameOverScreen {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.9);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 2;
-      }
-      #startBtn,
-      #restartBtn {
-        margin-top: 20px;
-        padding: 10px 20px;
-        font-size: 18px;
-        cursor: pointer;
-      }
-    </style>
-    <audio
-      id="bgMusic"
-      src="https://lqy3lriiybxcejon.public.blob.vercel-storage.com/b6be93ba-a3e5-4e2e-9dc5-775c9d84da4b/energetic_synthwave_loop-cEEnKErdJ0LfTJg3DgX5AWFjCKjnzq.mp3?PlE9"
-      loop
-    ></audio>
-  </head>
-  <body>
-    <div id="startScreen" style="color: white; text-align: center">
-      <h1>Hexagon Lite</h1>
-      <p>
-        Survive as long as you can!<br />Desktop: use ← and → arrow keys<br />Mobile: tap left or right side of the
-        screen
-      </p>
-      <button id="startBtn">Start</button>
-    </div>
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: black;
+      font-family: sans-serif;
+      color: white;
+    }
+    canvas {
+      display: block;
+    }
+    #startScreen, #gameOverScreen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    #startBtn, #restartBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+  </style>
+  <audio id="bgMusic" src="https://lqy3lriiybxcejon.public.blob.vercel-storage.com/b6be93ba-a3e5-4e2e-9dc5-775c9d84da4b/energetic_synthwave_loop-cEEnKErdJ0LfTJg3DgX5AWFjCKjnzq.mp3?PlE9" loop></audio>
+</head>
+<body>
+<div id="startScreen" style="color: white; text-align: center;">
+  <h1>Hexagon Lite</h1>
+  <p>Survive as long as you can!<br>Desktop: use ← and → arrow keys<br>Mobile: tap left or right side of the screen</p>
+  <button id="startBtn">Start</button>
+</div>
 
-    <canvas id="gameCanvas"></canvas>
-    <script>
-      const canvas = document.getElementById("gameCanvas");
-      const ctx = canvas.getContext("2d");
-      let w, h;
-      function resize() {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-      }
-      window.addEventListener("resize", resize);
-      resize();
+<canvas id="gameCanvas"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let w, h;
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
 
-      let playerAngle = 0;
-      let rotationSpeed = 0;
-      let wallSpeed = 1.5;
-      const wallWidth = Math.PI / 6;
-      let difficulty = 1;
-      let colors = ["#ff0066", "#00ccff", "#33ff33", "#ffcc00", "#9900ff"];
-      let currentColor = 0;
+let playerAngle = 0;
+let rotationSpeed = 0;
+let wallSpeed = 1.5;
+const wallWidth = Math.PI / 6;
+let difficulty = 1;
+let colors = ["#ff0066", "#00ccff", "#33ff33", "#ffcc00", "#9900ff"];
+let currentColor = 0;
 
-      let walls = [];
-      let time = 0;
-      let gameOver = false;
-      let started = false;
+let walls = [];
+let gameTime = 0;
+let gameOver = false;
+let started = false;
 
-      const startScreen = document.getElementById("startScreen");
-      const startBtn = document.getElementById("startBtn");
+const startScreen = document.getElementById('startScreen');
+const startBtn = document.getElementById('startBtn');
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowLeft") {
-          rotationSpeed = -0.05;
-          if (window.FarcadeSDK) window.FarcadeSDK.singlePlayer.actions.hapticFeedback();
-        } else if (e.key === "ArrowRight") {
-          rotationSpeed = 0.05;
-          if (window.FarcadeSDK) window.FarcadeSDK.singlePlayer.actions.hapticFeedback();
-        }
-      });
-      document.addEventListener("keyup", (e) => {
-        if (e.key === "ArrowLeft" || e.key === "ArrowRight") rotationSpeed = 0;
-      });
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') {
+    rotationSpeed = -0.05;
+    if (window.FarcadeSDK) window.FarcadeSDK.singlePlayer.actions.hapticFeedback();
+  } else if (e.key === 'ArrowRight') {
+    rotationSpeed = 0.05;
+    if (window.FarcadeSDK) window.FarcadeSDK.singlePlayer.actions.hapticFeedback();
+  }
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') rotationSpeed = 0;
+});
 
-      // Touch support for mobile
-      canvas.addEventListener("touchstart", (e) => {
-        const touchX = e.touches[0].clientX;
-        if (touchX < window.innerWidth / 2) {
-          rotationSpeed = -0.05;
-        } else {
-          rotationSpeed = 0.05;
-        }
-      });
+canvas.addEventListener('touchstart', e => {
+  const touchX = e.touches[0].clientX;
+  rotationSpeed = touchX < window.innerWidth / 2 ? -0.05 : 0.05;
+});
+canvas.addEventListener('touchend', () => {
+  rotationSpeed = 0;
+});
 
-      canvas.addEventListener("touchend", () => {
-        rotationSpeed = 0;
-      });
+function resetGame() {
+  walls = [];
+  playerAngle = 0;
+  rotationSpeed = 0;
+  wallSpeed = 1.5;
+  difficulty = 1;
+  currentColor = 0;
+  gameTime = 0;
+  gameOver = false;
+}
 
-      function resetGame() {
-        walls = [];
-        playerAngle = 0;
-        rotationSpeed = 0;
-        wallSpeed = 1.5;
-        difficulty = 1;
-        currentColor = 0;
-        time = 0;
-        gameOver = false;
-      }
+function createWall() {
+  const offset = Math.random() * 2 * Math.PI;
+  const patternTypes = [
+    [true, true, false, true, true, true],
+    [true, false, false, false, true, true],
+    [false, true, false, true, false, true],
+    [true, true, true, false, true, false]
+  ];
+  let pattern = patternTypes[Math.floor(Math.random() * patternTypes.length)];
 
-      function createWall() {
-        const offset = Math.random() * 2 * Math.PI;
-        const patternTypes = [
-          [true, true, false, true, true, true],
-          [true, false, false, false, true, true],
-          [false, true, false, true, false, true],
-          [true, true, true, false, true, false],
-        ];
-        let pattern = patternTypes[Math.floor(Math.random() * patternTypes.length)];
+  for (let i = 0; i < 6; i++) {
+    if (!pattern[i]) continue;
+    let angle = i * wallWidth + offset;
+    let spin = 0;
+    walls.push({ angle: angle % (2 * Math.PI), radius: 400, spin });
+  }
+}
 
-        for (let i = 0; i < 6; i++) {
-          if (!pattern[i]) continue;
-          let angle = i * wallWidth + offset;
-          let spin = 0; // rotation disabled
-          walls.push({ angle: angle % (2 * Math.PI), radius: 400, spin });
-        }
-      }
+function drawCirclePath() {
+  ctx.save();
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.setLineDash([5, 5]);
+  ctx.arc(w / 2, h / 2, 60, 0, Math.PI * 2);
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
 
-      function drawCirclePath() {
-        ctx.save();
-        ctx.shadowColor = "#FFD700";
-        ctx.shadowBlur = 20;
-        ctx.beginPath();
-        ctx.setLineDash([5, 5]);
-        ctx.arc(w / 2, h / 2, 60, 0, Math.PI * 2);
-        ctx.strokeStyle = "#FFD700";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-      }
+function drawPlayer() {
+  const radius = 60;
+  const x = w / 2 + Math.cos(playerAngle) * radius;
+  const y = h / 2 + Math.sin(playerAngle) * radius;
+  const grad = ctx.createRadialGradient(x, y, 2, x, y, 12);
+  grad.addColorStop(0, '#ffffcc');
+  grad.addColorStop(1, '#FFD700');
 
-      function drawPlayer() {
-        const radius = 60;
-        const x = w / 2 + Math.cos(playerAngle) * radius;
-        const y = h / 2 + Math.sin(playerAngle) * radius;
-        ctx.save();
-        ctx.shadowColor = "#FFD700";
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.arc(x, y, 10, 0, Math.PI * 2);
-        ctx.fillStyle = "#FFD700";
-        ctx.fill();
-        ctx.restore();
-        ctx.restore();
-      }
+  ctx.save();
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = 15;
 
-      function checkCollision() {
-        const playerDistance = 60;
-        const playerRadius = 10;
-        for (let wall of walls) {
-          let dx = Math.abs(playerAngle - wall.angle) % (2 * Math.PI);
-          if (dx > Math.PI) dx = 2 * Math.PI - dx;
-          if (dx < wallWidth / 2 && Math.abs(wall.radius - playerDistance) < playerRadius) {
-            return true;
-          }
-        }
-        return false;
-      }
+  ctx.beginPath();
+  ctx.arc(x, y, 10, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.restore();
 
-      function drawTime() {
-        ctx.fillStyle = "white";
-        ctx.font = "20px sans-serif";
-        ctx.fillText(`Time: ${(time / 60).toFixed(1)}s`, 20, 30);
-      }
+  // Add 3D shading effect
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x - 3, y - 3, 3, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.fill();
+  ctx.restore();
+}
 
-      function gameLoop() {
-        ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, w, h);
-        if (!started) return;
-        for (let i = 0; i < 6; i++) {
-          let startAngle = i * wallWidth;
-          ctx.beginPath();
-          ctx.moveTo(w / 2, h / 2);
-          ctx.arc(w / 2, h / 2, Math.max(w, h), startAngle, startAngle + wallWidth);
-          ctx.closePath();
-          ctx.fillStyle = i % 2 === 0 ? "rgba(0, 128, 128, 0.4)" : "rgba(0, 255, 200, 0.2)";
-          ctx.fill();
-        }
-        for (let i = 0; i < 6; i++) {
-          let startAngle = i * wallWidth + Math.PI;
-          ctx.beginPath();
-          ctx.moveTo(w / 2, h / 2);
-          ctx.arc(w / 2, h / 2, Math.max(w, h), startAngle, startAngle + wallWidth);
-          ctx.closePath();
-          ctx.fillStyle = i % 2 === 0 ? "rgba(0, 128, 128, 0.4)" : "rgba(0, 255, 200, 0.2)";
-          ctx.fill();
-        }
+function checkCollision() {
+  const playerDistance = 60;
+  const playerRadius = 10;
+  for (let wall of walls) {
+    let dx = Math.abs(playerAngle - wall.angle) % (2 * Math.PI);
+    if (dx > Math.PI) dx = 2 * Math.PI - dx;
+    if (dx < wallWidth / 2 && Math.abs(wall.radius - playerDistance) < playerRadius) {
+      return true;
+    }
+  }
+  return false;
+}
 
-        time++;
-        playerAngle += rotationSpeed;
+function drawTime() {
+  ctx.fillStyle = 'white';
+  ctx.font = '20px sans-serif';
+  ctx.fillText(`Time: ${(gameTime / 60).toFixed(1)}s`, 20, 30);
+}
 
-        if (time % 90 === 0) createWall();
-        if (time % 900 === 0) {
-          difficulty++;
-          wallSpeed += 0.2;
-          currentColor++;
-        }
+function gameLoop() {
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, w, h);
 
-        walls = walls.filter((wall) => wall.radius > 40);
-        for (let wall of walls) {
-          wall.radius -= wallSpeed;
-          wall.angle += wall.spin || 0;
-          if (wall.radius < 60) continue;
-          ctx.beginPath();
-          let a1 = wall.angle;
-          let a2 = wall.angle + wallWidth;
-          let r1 = wall.radius;
-          let r2 = wall.radius + 20;
-          ctx.moveTo(w / 2 + Math.cos(a1) * r2, h / 2 + Math.sin(a1) * r2);
-          ctx.lineTo(w / 2 + Math.cos(a2) * r2, h / 2 + Math.sin(a2) * r2);
-          ctx.lineTo(w / 2 + Math.cos(a2) * r1, h / 2 + Math.sin(a2) * r1);
-          ctx.lineTo(w / 2 + Math.cos(a1) * r1, h / 2 + Math.sin(a1) * r1);
-          ctx.closePath();
-          ctx.save();
-          ctx.shadowColor = "#00ffff";
-          ctx.shadowBlur = 15;
-          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          ctx.fill();
-        }
+  for (let i = 0; i < 6; i++) {
+    let startAngle = i * wallWidth;
+    ctx.beginPath();
+    ctx.moveTo(w / 2, h / 2);
+    ctx.arc(w / 2, h / 2, Math.max(w, h), startAngle, startAngle + wallWidth);
+    ctx.closePath();
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(0, 200, 100, 0.5)' : 'rgba(0, 255, 180, 0.3)';
+    ctx.fill();
+  }
 
-        drawCirclePath();
-        drawPlayer();
-        drawTime();
+  for (let i = 0; i < 6; i++) {
+    let startAngle = i * wallWidth + Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(w / 2, h / 2);
+    ctx.arc(w / 2, h / 2, Math.max(w, h), startAngle, startAngle + wallWidth);
+    ctx.closePath();
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(0, 200, 100, 0.5)' : 'rgba(0, 255, 180, 0.3)';
+    ctx.fill();
+  }
 
-        if (checkCollision()) {
-          gameOver = true;
-          started = false;
-          document.getElementById("bgMusic").pause();
-          let scoreValue = +(time / 60).toFixed(1);
-          if (window.FarcadeSDK) window.FarcadeSDK.singlePlayer.actions.gameOver({ score: scoreValue });
-          return;
-        }
+  if (started) {
+    gameTime++;
+    playerAngle += rotationSpeed;
 
-        requestAnimationFrame(gameLoop);
-      }
+    if (gameTime % 90 === 0) createWall();
+    if (gameTime % 900 === 0) {
+      difficulty++;
+      wallSpeed += 0.2;
+      currentColor++;
+    }
 
-      startBtn.onclick = () => {
-        if (window.FarcadeSDK) window.FarcadeSDK.singlePlayer.actions.ready();
-        startScreen.style.display = "none";
-        resetGame();
-        started = true;
-        document.getElementById("bgMusic").play();
-        gameLoop();
-      };
+    walls = walls.filter(wall => wall.radius > 40);
+    for (let wall of walls) {
+      wall.radius -= wallSpeed;
+      wall.angle += wall.spin || 0;
+      if (wall.radius < 60) continue;
+      ctx.beginPath();
+      let a1 = wall.angle;
+      let a2 = wall.angle + wallWidth;
+      let r1 = wall.radius;
+      let r2 = wall.radius + 20;
+      ctx.moveTo(w / 2 + Math.cos(a1) * r2, h / 2 + Math.sin(a1) * r2);
+      ctx.lineTo(w / 2 + Math.cos(a2) * r2, h / 2 + Math.sin(a2) * r2);
+      ctx.lineTo(w / 2 + Math.cos(a2) * r1, h / 2 + Math.sin(a2) * r1);
+      ctx.lineTo(w / 2 + Math.cos(a1) * r1, h / 2 + Math.sin(a1) * r1);
+      ctx.closePath();
+      ctx.save();
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fill();
+    }
 
-      window.FarcadeSDK?.on("play_again", () => {
-        gameOver = false;
-        resetGame();
-        started = true;
-        document.getElementById("bgMusic").play();
-        gameLoop();
-      });
+    if (checkCollision()) {
+      gameOver = true;
+      started = false;
+      document.getElementById('bgMusic').pause();
+      let scoreValue = +(gameTime / 60).toFixed(1);
+      if (window.FarcadeSDK) window.FarcadeSDK.singlePlayer.actions.gameOver({ score: scoreValue });
+      return;
+    }
+  }
 
-      window.FarcadeSDK?.on("toggle_mute", (data) => {
-        const audio = document.getElementById("bgMusic");
-        audio.muted = !!data.isMuted;
-      });
-    </script>
-  </body>
+  drawCirclePath();
+  drawPlayer();
+  drawTime();
+  requestAnimationFrame(gameLoop);
+}
+
+startBtn.onclick = () => {
+  if (window.FarcadeSDK) window.FarcadeSDK.singlePlayer.actions.ready();
+  startScreen.style.display = 'none';
+  resetGame();
+  document.getElementById('bgMusic').play();
+  createWall();
+  gameLoop();
+  setTimeout(() => {
+    started = true;
+  }, 1000);
+};
+
+window.FarcadeSDK?.on('play_again', () => {
+  gameOver = false;
+  resetGame();
+  started = true;
+  document.getElementById('bgMusic').play();
+  gameLoop();
+});
+
+window.FarcadeSDK?.on('toggle_mute', (data) => {
+  const audio = document.getElementById('bgMusic');
+  audio.muted = !!data.isMuted;
+});
+</script>
+</body>
 </html>
